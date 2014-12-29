@@ -1,0 +1,15 @@
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++                                                                                                                ++
+++                                                                                                                ++
+++                                     Lightswitch, a software raytracer                                          ++
+++                                                                                                                ++
+++                                                                                                                ++
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+This is my software raytrace written in C++ for educational purposes. Right now it can only render spheres. 
+I plan to extend it with more features.
+Also beware that this software most likly contains bugs and code which needs optimization.
+
+The SDL2 library is used to display the results.
+
+The glm libraty is used to do the internal math.
