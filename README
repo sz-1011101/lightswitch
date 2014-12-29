@@ -1,11 +1,5 @@
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-++                                                                                                                ++
-++                                                                                                                ++
-++                                     Lightswitch, a software raytracer                                          ++
-++                                                                                                                ++
-++                                                                                                                ++
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
+Lightswitch, a software raytracer
+---------------------------------
 This is my software raytrace written in C++ for educational purposes. Right now it can only render spheres. 
 I plan to extend it with more features.
 Also beware that this software most likly contains bugs and code which needs optimization.
