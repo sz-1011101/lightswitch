@@ -6,11 +6,13 @@
 #include <include/Material.h>
 #include <include/Light.h>
 
-Phong::Phong(Scene* scene, int maximum_recursion_depth, float epsilon) : Illumination(scene, maximum_recursion_depth, epsilon)
+Phong::Phong(Scene* scene, int maximum_recursion_depth, float epsilon, glm::vec3 sky, bool use_sky_color) : Illumination(scene, maximum_recursion_depth, epsilon)
 {
     this->scene = scene;
     this->maximum_recursion_depth = maximum_recursion_depth;
     this->epsilon = epsilon;
+    this->sky = sky;
+    this->use_sky_color = use_sky_color;
 }
 
 Phong::~Phong()
@@ -18,13 +20,20 @@ Phong::~Phong()
     
 }
 
+glm::vec3 Phong::GetSkyColor()
+{
+    return sky;
+}
+
 glm::vec3 Phong::CalculateIntensity(Ray* ray, int recursion_depth)
 {
+    
+    
     //TODO make this readable
     std::vector<Light*>* lights = scene->GetLights();
     std::vector<Object*>* objects = scene->GetObjects();
     Object* current_object = ray->GetIntersection().object;
-      
+    
     glm::vec3 complete_intensity=glm::vec3(0);
     glm::vec3 ambient_term;
     glm::vec3 diff_term;
@@ -56,9 +65,8 @@ glm::vec3 Phong::CalculateIntensity(Ray* ray, int recursion_depth)
         Ray* shadow_ray = new Ray(ray->GetIntersection().hit+(n*epsilon),l);
         
         /* A shadow ray is send from the hit position towards the light.
-         * If it hits something the light can't illuminate the hit position. */
+        * If it hits something the light can't illuminate the hit position. */
         
-
         if (HitCheck::CheckForIntersection(shadow_ray, objects))
         {
             complete_intensity += ambient_term/(distance_to_light*distance_to_light);
@@ -72,11 +80,10 @@ glm::vec3 Phong::CalculateIntensity(Ray* ray, int recursion_depth)
         shadow_ray = NULL; 
         
         /* Recursive reflexion calculation, just sends another ray off in the reflexion direction of the view vector v
-         * and adds the light of this reflexion */
-        
-        
+        * and adds the light of this reflexion */
+             
         glm::vec3 v_r = glm::normalize((2.0f*glm::dot(n,v)*n)-v);
-               
+            
         if (recursion_depth<maximum_recursion_depth)
         {
             Ray* reflexion_ray = new Ray(ray->GetIntersection().hit+(n*epsilon),v_r);
@@ -86,14 +93,20 @@ glm::vec3 Phong::CalculateIntensity(Ray* ray, int recursion_depth)
                 Object* reflexion_hit_object = reflexion_ray->GetIntersection().object;
                 glm::vec3 reflected_intens = reflexion_hit_object->CalculateIntensity(this, reflexion_ray);
                 float distance_to_reflexion = glm::length(reflexion_ray->GetOrigin()-reflexion_ray->GetIntersection().hit);
-                complete_intensity += (reflected_intens/(recursion_depth+1.0f))*current_object->GetMaterial()->GetSpecular()/(distance_to_reflexion*distance_to_reflexion);
+                complete_intensity += reflected_intens*current_object->GetMaterial()->GetSpecular();
             }
             
             delete reflexion_ray;
             reflexion_ray = NULL; 
         } 
- 
     }
-
+    
+    //TODO Experimental
+    if (use_sky_color)
+    {
+        complete_intensity += (((sky*0.25f)*specular) + ((sky*0.01f)*diffuse) + ((sky*0.001f)*ambient));
+    }
+    
     return complete_intensity;
+
 }

@@ -98,6 +98,10 @@ void Renderer::Render()
                 }
                 framebuffer->SetPixel(x,y,intens);              
             }
+            else
+            {
+                framebuffer->SetPixel(x,y,illumination->GetSkyColor());
+            }
             
             //Clean up
             delete ray;
