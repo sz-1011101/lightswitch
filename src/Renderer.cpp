@@ -1,8 +1,11 @@
 #include <include/Renderer.h>
 #include <include/HitCheck.h>
+#include <include/Scene.h>
 #include <include/Ray.h>
-#include <include/Sphere.h>
-#include "Light.h"
+#include <include/Material.h>
+#include <include/Light.h>
+#include <include/Object.h>
+#include <include/Illumination.h>
 #include <vector>
 
 Renderer* Renderer::instance = NULL;
@@ -14,22 +17,7 @@ Renderer::Renderer()
 
 Renderer::~Renderer()
 {
-    if (instance!=NULL)
-    {
-        delete instance;
-    }
     
-    //Clean up spheres
-    for (std::vector<Sphere*>::iterator itr = spheres.begin(); itr!=spheres.end(); itr++)
-    {  
-        delete (*itr);
-    }
-    
-    //Clean up lights
-    for (std::vector<Light*>::iterator itr = lights.begin(); itr!=lights.end(); itr++)
-    {  
-        delete (*itr);
-    }
 }
 
 Renderer* Renderer::GetInstance()
@@ -64,18 +52,16 @@ bool Renderer::SetRenderResolution(int width, int height)
     return true;
 }
 
-bool Renderer::AddSphere(Sphere* sphere)
+bool Renderer::SetScene(Scene* scene)
 {
-    
-    spheres.push_back(sphere);
-    printf("Sphere has been added, currently %i spheres in the scene\n",spheres.size());
+    this->scene = scene;
     return true;
 }
 
-bool Renderer::AddLight(Light* light)
+bool Renderer::SetIllumination(Illumination* illumination)
 {
-    lights.push_back(light);
-    printf("Light has been added, currently %i lights in the scene\n",lights.size());
+    this->illumination = illumination;
+    puts("illumination set");
     return true;
 }
 
@@ -87,6 +73,7 @@ void Renderer::Render()
         puts("Error, framebuffer or camera is NULL");
         return;
     }
+    
     puts("Rendering...");
     //Generate the rays from the camera's position to the imageplane
     for (int x = 0; x<width; x++)
@@ -97,12 +84,11 @@ void Renderer::Render()
             Ray* ray = camera->GenerateRay(x,y, width, height);
             
             
-            if (HitCheck::CheckForIntersection(ray, &spheres))
+            if (HitCheck::CheckForIntersection(ray, scene->GetObjects()))
             {
-                Sphere* hit_sphere = ray->GetIntersection().sphere;
-                glm::vec3 intens = hit_sphere->CalculateIntensity(ray, &lights, &spheres);
-                
-                //HACK
+                Object* hit_object = ray->GetIntersection().object;
+                glm::vec3 intens = hit_object->CalculateIntensity(illumination, ray);
+                //HACK ...But it produces proper results
                 for (int i=0;i<3;i++)
                 {
                     if (intens[i]>1.0f)
@@ -110,12 +96,20 @@ void Renderer::Render()
                         intens[i]=1.0f;
                     }
                 }
-                framebuffer->SetPixel(x,y,intens);
-                
+                framebuffer->SetPixel(x,y,intens);              
             }
             
             //Clean up
             delete ray;
         }
     }
+}
+
+void Renderer::Destroy()
+{
+    if (instance!=NULL)
+    {
+        delete instance;
+    }
+    instance = NULL;
 }

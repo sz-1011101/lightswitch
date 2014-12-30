@@ -1,10 +1,10 @@
 #include<include/HitCheck.h>
-#include<include/Sphere.h>
+#include<include/Object.h>
 #include<include/Ray.h>
 
-bool HitCheck::CheckForIntersection(Ray* ray, std::vector<Sphere*>* spheres)
+bool HitCheck::CheckForIntersection(Ray* ray, std::vector<Object*>* objects)
 {
-        for (std::vector<Sphere*>::iterator itr = spheres->begin(); itr!=spheres->end(); itr++)
+        for (std::vector<Object*>::iterator itr = objects->begin(); itr!=objects->end(); itr++)
     {
         (*itr)->Intersect(ray);
 

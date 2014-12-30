@@ -1,6 +1,6 @@
 #include "RT.h"
 
-class Sphere;
+class Object;
 
 struct Intersection
 {
@@ -9,5 +9,5 @@ struct Intersection
     glm::vec3 reflection;
     bool valid;
     float length;
-    Sphere* sphere;
+    Object* object;
 };
