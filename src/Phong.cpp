@@ -58,8 +58,7 @@ glm::vec3 Phong::CalculateIntensity(Ray* ray, int recursion_depth)
         
         ambient_term = ambient*i_l;
         diff_term = (diffuse*i_l)*glm::dot(n,l);
-        spec_term = (specular*i_l)*((float)pow(glm::dot(r,v),current_object->GetMaterial()->GetPhong_exponent()));
-        
+        spec_term = (specular*i_l)*((float)pow(std::max(0.0f,glm::dot(r,v)),current_object->GetMaterial()->GetPhong_exponent()));
         float distance_to_light = glm::length(ray->GetIntersection().hit-(*itr)->GetPosition());
         
         Ray* shadow_ray = new Ray(ray->GetIntersection().hit+(n*epsilon),l);
@@ -92,7 +91,6 @@ glm::vec3 Phong::CalculateIntensity(Ray* ray, int recursion_depth)
             {
                 Object* reflexion_hit_object = reflexion_ray->GetIntersection().object;
                 glm::vec3 reflected_intens = reflexion_hit_object->CalculateIntensity(this, reflexion_ray);
-                float distance_to_reflexion = glm::length(reflexion_ray->GetOrigin()-reflexion_ray->GetIntersection().hit);
                 complete_intensity += reflected_intens*current_object->GetMaterial()->GetSpecular();
             }
             
@@ -104,7 +102,7 @@ glm::vec3 Phong::CalculateIntensity(Ray* ray, int recursion_depth)
     //TODO Experimental
     if (use_sky_color)
     {
-        complete_intensity += (((sky*0.25f)*specular) + ((sky*0.01f)*diffuse) + ((sky*0.001f)*ambient));
+        complete_intensity += (((sky*0.5f)*specular) + ((sky*0.01f)*diffuse) + ((sky*0.001f)*ambient));
     }
     
     return complete_intensity;
