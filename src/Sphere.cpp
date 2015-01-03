@@ -6,9 +6,7 @@
 
 Sphere::Sphere(glm::vec3 position, float radius, Material* material) : Object(position, material)
 {
-    this->position = position;
     this->radius = radius;
-    this->material = material;
 }
 
 Sphere::~Sphere()
@@ -37,8 +35,8 @@ bool Sphere::Intersect(Ray* ray)
         float t_1 = (-b+sqrt(discriminant))/(2*a);
         float t_2 = (-b-sqrt(discriminant))/(2*a);
         float t;
+        
         Intersection intersection;
-        intersection.valid = true;
         
         if (t_1<t_2 && t_1>0)
         {

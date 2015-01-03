@@ -34,10 +34,15 @@ glm::vec3 Ray::GetDirection()
 
 void Ray::SetIntersection(Intersection intersection)
 {
-    if (glm::length(this->intersection.hit-origin)>glm::length(intersection.hit-origin))
+    if (!this->intersection.valid)
     {
+        intersection.valid = true;
         this->intersection = intersection;
     }
+    else if (glm::length(this->intersection.hit-origin)>glm::length(intersection.hit-origin))
+    {
+        this->intersection = intersection;
+    } 
 }
 
 Intersection Ray::GetIntersection()

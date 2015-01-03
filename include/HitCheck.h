@@ -9,4 +9,5 @@ private:
 public:
     //Returns true if a collision happend between the given spheres and ray
     static bool CheckForIntersection(Ray* ray, std::vector<Object*>* objects);
+    static bool CheckForIntersection(Ray* ray, std::vector<Object*>* objects, Object* ignore);
 };

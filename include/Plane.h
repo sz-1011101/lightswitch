@@ -12,13 +12,13 @@ class Ray;
 class Material;
 class illumination;
 
-class Sphere : public Object
+class Plane : public Object
 {
 private:
-    float radius;
+    glm::vec3 normal;
 public:
-    Sphere(glm::vec3 position, float radius, Material* material);
-    ~Sphere();
+    Plane(glm::vec3 position, glm::vec3 normal, Material* material);
+    ~Plane();
     //Derived
     virtual bool Intersect(Ray* ray);
 };

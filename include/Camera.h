@@ -11,13 +11,15 @@ private:
    glm::vec3 v;
    glm::vec3 e; //The camera's position
    glm::vec3 z; //Where the camera looks at
-   int l;
-   int r;
-   int t;
-   int b;
+   float l;
+   float r;
+   float t;
+   float b;
    float d;
+   float width;
+   float height;
 public:
-   Camera(glm::vec3 up ,glm::vec3 e, glm::vec3 z,int width, int height);
+   Camera(glm::vec3 up ,glm::vec3 e, glm::vec3 z,float width, float height); // Constructor with up, position e and lookat z vector and the width and height of the viewplane
    ~Camera();
-   Ray* GenerateRay(int x, int y, int width, int height); // Generate a ray corresponding to the pixel (x,y) and the width of the rendered image
+   Ray* GenerateRay(float x, float y); // Generate a ray corresponding to the pixel (x,y) and the width of the rendered image
 };

@@ -61,7 +61,6 @@ bool Renderer::SetScene(Scene* scene)
 bool Renderer::SetIllumination(Illumination* illumination)
 {
     this->illumination = illumination;
-    puts("illumination set");
     return true;
 }
 
@@ -81,7 +80,7 @@ void Renderer::Render()
         for (int y = 0; y<height; y++)
         {  
             //Generate the ray and check for intersections
-            Ray* ray = camera->GenerateRay(x,y, width, height);
+            Ray* ray = camera->GenerateRay(x/(float)width,y/(float)height);
             
             
             if (HitCheck::CheckForIntersection(ray, scene->GetObjects()))

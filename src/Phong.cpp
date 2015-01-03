@@ -28,7 +28,6 @@ glm::vec3 Phong::GetSkyColor()
 glm::vec3 Phong::CalculateIntensity(Ray* ray, int recursion_depth)
 {
     
-    
     //TODO make this readable
     std::vector<Light*>* lights = scene->GetLights();
     std::vector<Object*>* objects = scene->GetObjects();
@@ -50,7 +49,6 @@ glm::vec3 Phong::CalculateIntensity(Ray* ray, int recursion_depth)
 
     for (std::vector<Light*>::iterator itr = (*lights).begin(); itr != (*lights).end(); itr++)
     {
-        
         l = glm::normalize((*itr)->GetPosition() - ray->GetIntersection().hit); //vector from hit to light
         r = glm::normalize((2.0f*glm::dot(n,l)*n)-l); //Calculate the perfect reflexion from the light on the sphere
         v = glm::normalize(-ray->GetDirection());
@@ -61,12 +59,12 @@ glm::vec3 Phong::CalculateIntensity(Ray* ray, int recursion_depth)
         spec_term = (specular*i_l)*((float)pow(std::max(0.0f,glm::dot(r,v)),current_object->GetMaterial()->GetPhong_exponent()));
         float distance_to_light = glm::length(ray->GetIntersection().hit-(*itr)->GetPosition());
         
-        Ray* shadow_ray = new Ray(ray->GetIntersection().hit+(n*epsilon),l);
-        
+        Ray* shadow_ray = new Ray(ray->GetIntersection().hit,l);
+
         /* A shadow ray is send from the hit position towards the light.
         * If it hits something the light can't illuminate the hit position. */
         
-        if (HitCheck::CheckForIntersection(shadow_ray, objects))
+        if (HitCheck::CheckForIntersection(shadow_ray, objects, current_object))
         {
             complete_intensity += ambient_term/(distance_to_light*distance_to_light);
         }
@@ -82,12 +80,12 @@ glm::vec3 Phong::CalculateIntensity(Ray* ray, int recursion_depth)
         * and adds the light of this reflexion */
              
         glm::vec3 v_r = glm::normalize((2.0f*glm::dot(n,v)*n)-v);
-            
-        if (recursion_depth<maximum_recursion_depth)
+
+        if (recursion_depth<maximum_recursion_depth && !(specular[0]<=0.0f && specular[1]<=0.0f && specular[2]<=0.0f))
         {
-            Ray* reflexion_ray = new Ray(ray->GetIntersection().hit+(n*epsilon),v_r);
+            Ray* reflexion_ray = new Ray(ray->GetIntersection().hit,v_r);
             
-            if (HitCheck::CheckForIntersection(reflexion_ray, objects))
+            if (HitCheck::CheckForIntersection(reflexion_ray, objects, current_object))
             {
                 Object* reflexion_hit_object = reflexion_ray->GetIntersection().object;
                 glm::vec3 reflected_intens = reflexion_hit_object->CalculateIntensity(this, reflexion_ray);
@@ -102,7 +100,7 @@ glm::vec3 Phong::CalculateIntensity(Ray* ray, int recursion_depth)
             reflexion_ray = NULL; 
         } 
     }
-    
+
     return complete_intensity;
 
 }
