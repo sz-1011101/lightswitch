@@ -1,6 +1,10 @@
 #include "RT.h"
 #include "Camera.h"
 #include "Framebuffer.h"
+#ifndef _RENDERJOB_H
+#define _RENDERJOB_H
+#include <include/RenderJob.h>
+#endif
 #include <vector>
 
 class Light;
@@ -28,7 +32,9 @@ public:
     bool SetRenderResolution(int width, int height); //Set the rendered Resolution
     bool SetScene(Scene* scene);
     bool SetIllumination(Illumination* illumination);
-    void Render();
+    int GetWidth();
+    int GetHeight();
+    void Render(RenderJob job);
     static Renderer* GetInstance(); //Returns the class'es instance
     void Destroy();
 };

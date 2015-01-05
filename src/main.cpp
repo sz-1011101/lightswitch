@@ -1,5 +1,6 @@
 #include <include/RT.h>
 #include <include/Renderer.h>
+#include <include/RenderThread.h>
 #include <include/WindowWrapper.h>
 #include <include/MaterialGenerator.h>
 #include <include/Sphere.h>
@@ -14,7 +15,7 @@ int main(int argc, char* args[])
     const int width = 512;
     const int height = 512;
     
-    Camera* camera = new Camera(glm::vec3(0,1,0),glm::vec3(7,0.5,0.5),glm::vec3(0,0,0),1.0f,1.0f); 
+    Camera* camera = new Camera(glm::vec3(0,1,0),glm::vec3(7,7,7),glm::vec3(0,0,0),1.0f,1.0f); 
     Framebuffer* framebuffer = new Framebuffer(width, height);
     Renderer* renderer = Renderer::GetInstance();
     WindowWrapper* windowwrapper = new WindowWrapper(width, height, framebuffer);
@@ -24,7 +25,7 @@ int main(int argc, char* args[])
     Material* mat1 = material_generator->GenMaterial(glm::vec3(0.8,0.1,0.1),glm::vec3(0.1,0.1,0.1),glm::vec3(0.5),80);
     Material* mat2 = material_generator->GenMaterial(glm::vec3(0.1,0.8,0.1),glm::vec3(0.1,0.1,0.1),glm::vec3(0.5),50);
     Material* mat3 = material_generator->GenMaterial(glm::vec3(0.1,0.1,0.8),glm::vec3(0.1,0.1,0.1),glm::vec3(0.5),100);
-    Material* mat4 = material_generator->GenMaterial(glm::vec3(1,1,0.1),glm::vec3(0.5,0.5,0.1),glm::vec3(0.5,0.5,0.1),35);
+    Material* mat4 = material_generator->GenMaterial(glm::vec3(1,1,0.1),glm::vec3(0.1,0.1,0.1),glm::vec3(0.01),35);
     
     scene->AddLight(new Light(glm::vec3(6,3,1),25.0f,glm::vec3(1.0f,1.0f,1.0f)));
     
@@ -40,13 +41,27 @@ int main(int argc, char* args[])
     renderer->SetCamera(camera);
     renderer->SetFramebuffer(framebuffer);
     renderer->SetIllumination(phong_illumination);
-    renderer->Render();
     
-    while (windowwrapper->IsActive())
+    RenderThread* renderthread = new RenderThread(renderer);
+    
+    //main loop
+    while (!renderthread->IsRenderingDone() && windowwrapper->IsActive())
     {
+        renderthread->Wait();
         windowwrapper->Refresh();
-        windowwrapper->HandleEvents();
     }
+    windowwrapper->Refresh();
+    //make sure the renderer stops in case the user wants to quit the program
+    renderthread->SetRenderDone();
+    
+    //Wait for quit action of user
+    if (windowwrapper->IsActive())
+    {
+        windowwrapper->HandleEvents(false);
+    }
+    
+    
+    delete renderthread;
     
     delete windowwrapper;
     windowwrapper = NULL;

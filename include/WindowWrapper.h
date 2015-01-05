@@ -1,5 +1,6 @@
 #include <SDL2/SDL.h>
 
+
 class Framebuffer;
 
 class WindowWrapper
@@ -20,7 +21,8 @@ public:
     WindowWrapper(int width, int height, Framebuffer* framebuffer);
     ~WindowWrapper();
     void Refresh();
+    void refreshTextureAndRender();
     void SetInactive();
     bool IsActive();
-    void HandleEvents();
+    void HandleEvents(bool use_polling);
 };

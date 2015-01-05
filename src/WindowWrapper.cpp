@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <math.h>
 
+
 WindowWrapper::WindowWrapper(int width, int height, Framebuffer* framebuffer)
 {
     this->width = width;
@@ -43,8 +44,7 @@ WindowWrapper::WindowWrapper(int width, int height, Framebuffer* framebuffer)
 
             surface = SDL_CreateRGBSurface(0, width, height,32,rmask,gmask,bmask,amask);
             renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-            
-            
+
             if (renderer == NULL)
             {
                 printf("Error creating renderer: %s\n",SDL_GetError());
@@ -53,6 +53,7 @@ WindowWrapper::WindowWrapper(int width, int height, Framebuffer* framebuffer)
             {
                 SDL_SetRenderDrawColor(renderer, 200,200,200,255);
                 SDL_RenderClear(renderer);
+                SDL_RenderPresent(renderer);
             }
             
         }
@@ -76,27 +77,34 @@ WindowWrapper::~WindowWrapper()
 
 void WindowWrapper::Refresh()
 {
-    Uint32 *pixels = (Uint32 *)surface->pixels;
-    if (active)
-    {     
-        
-        for(int x=0;x<framebuffer->GetWidth();x++)
+    refreshTextureAndRender();
+    HandleEvents(true);
+}
+
+void WindowWrapper::refreshTextureAndRender()
+{
+    Uint32 *pixels = (Uint32*)surface->pixels;
+    
+    for(int x=0;x<framebuffer->GetWidth();x++)
+    {
+        for(int y=0;y<framebuffer->GetHeight();y++)
         {
-            for(int y=0;y<framebuffer->GetHeight();y++)
-            {
-                glm::vec3 current_pixel = framebuffer->GetPixel(x,y);
-                pixels[( y * surface->w ) + x] = ConvertColorToPixel(current_pixel[0],current_pixel[1],current_pixel[2]);
-            }
+            glm::vec3 current_pixel = framebuffer->GetPixel(x,y);
+            pixels[( y * surface->w ) + x] = ConvertColorToPixel(current_pixel[0],current_pixel[1],current_pixel[2]);
         }
-        
     }
+    
     if (texture!=NULL)
     {
         SDL_DestroyTexture(texture);
     }
+    
     texture = SDL_CreateTextureFromSurface(renderer,surface);
+    SDL_SetRenderDrawColor( renderer, 0xFF, 0xFF, 0xFF, 0xFF );
+    SDL_RenderClear(renderer );
     SDL_RenderCopy(renderer, texture, NULL, NULL);
     SDL_RenderPresent(renderer);
+    
 }
 
 void WindowWrapper::SetInactive()
@@ -109,14 +117,28 @@ bool WindowWrapper::IsActive()
     return active;
 }
 
-void WindowWrapper::HandleEvents()
+void WindowWrapper::HandleEvents(bool use_polling)
 {
-    while (SDL_WaitEvent(&event))
+    if (use_polling)
     {
-        if (event.type == SDL_QUIT)
+        while (SDL_PollEvent(&event))
         {
-            SetInactive();
-            break;
+            if (event.type == SDL_QUIT)
+            {
+                SetInactive();
+                break;
+            }
+        }
+    }
+    else
+    {
+        while (SDL_WaitEvent(&event))
+        {
+            if (event.type == SDL_QUIT)
+            {
+                SetInactive();
+                break;
+            }
         }
     }
 }
@@ -140,3 +162,4 @@ Uint32 WindowWrapper::ConvertColorToPixel(float r, float g, float b)
     
     return result;
 }
+
