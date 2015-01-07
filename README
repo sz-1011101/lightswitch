@@ -6,4 +6,4 @@ Also beware that this software most likly contains bugs and code which needs opt
 
 The SDL2 library is used to display the results.
 
-The glm libraty is used to do the internal math.
+The glm library is used to do the internal math.
