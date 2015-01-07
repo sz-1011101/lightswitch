@@ -25,7 +25,7 @@ int main(int argc, char* args[])
     Material* mat1 = material_generator->GenMaterial(glm::vec3(0.8,0.1,0.1),glm::vec3(0.1,0.1,0.1),glm::vec3(0.5),80);
     Material* mat2 = material_generator->GenMaterial(glm::vec3(0.1,0.8,0.1),glm::vec3(0.1,0.1,0.1),glm::vec3(0.5),50);
     Material* mat3 = material_generator->GenMaterial(glm::vec3(0.1,0.1,0.8),glm::vec3(0.1,0.1,0.1),glm::vec3(0.5),100);
-    Material* mat4 = material_generator->GenMaterial(glm::vec3(1,1,0.1),glm::vec3(0.1,0.1,0.1),glm::vec3(0.01),35);
+    Material* mat4 = material_generator->GenMaterial(glm::vec3(1,1,0.1),glm::vec3(0.1,0.1,0.1),glm::vec3(0.1),35);
     
     scene->AddLight(new Light(glm::vec3(6,3,1),25.0f,glm::vec3(1.0f,1.0f,1.0f)));
     

@@ -82,31 +82,40 @@ void Renderer::Render(RenderJob job)
         puts("Error, framebuffer or camera is NULL");
         return;
     }
-
-    //Generate the ray and check for intersections
-    Ray* ray = camera->GenerateRay(job.x/(float)width,job.y/(float)height);
     
-    if (HitCheck::CheckForIntersection(ray, scene->GetObjects()))
+    int upper_x = job.x + job.cell_width_height > width ? width : job.x + job.cell_width_height;
+    int upper_y = job.y + job.cell_width_height > height ? height : job.y + job.cell_width_height;
+    
+    for (int y = job.y; y < upper_y; y++)
     {
-        Object* hit_object = ray->GetIntersection().object;
-        glm::vec3 intens = hit_object->CalculateIntensity(illumination, ray);
-        //HACK ...But it produces proper results
-        for (int i=0;i<3;i++)
+        for (int x = job.x; x < upper_x; x++)
         {
-            if (intens[i]>1.0f)
+            //Generate the ray and check for intersections
+            Ray* ray = camera->GenerateRay(x/(float)width,y/(float)height);
+            
+            if (HitCheck::CheckForIntersection(ray, scene->GetObjects()))
             {
-                intens[i]=1.0f;
+                Object* hit_object = ray->GetIntersection().object;
+                glm::vec3 intens = hit_object->CalculateIntensity(illumination, ray);
+                //HACK ...But it produces proper results
+                for (int i = 0; i < 3; i++)
+                {
+                    if (intens[i] > 1.0f)
+                    {
+                        intens[i] = 1.0f;
+                    }
+                }
+                framebuffer->SetPixel(x, y, intens);              
             }
+            else
+            {
+                framebuffer->SetPixel(x, y, illumination->GetSkyColor());
+            }
+            
+            //Clean up
+            delete ray;
         }
-        framebuffer->SetPixel(job.x,job.y,intens);              
     }
-    else
-    {
-        framebuffer->SetPixel(job.x,job.y,illumination->GetSkyColor());
-    }
-    
-    //Clean up
-    delete ray;
 }
 
 void Renderer::Destroy()
