@@ -12,8 +12,8 @@
 int main(int argc, char* args[]) 
 {
     //Lots of testing
-    const int width = 512;
-    const int height = 512;
+    const int width = 1000;
+    const int height = 1000;
     
     Camera* camera = new Camera(glm::vec3(0,1,0),glm::vec3(7,7,7),glm::vec3(0,0,0),1.0f,1.0f); 
     Framebuffer* framebuffer = new Framebuffer(width, height);
@@ -25,16 +25,19 @@ int main(int argc, char* args[])
     Material* mat1 = material_generator->GenMaterial(glm::vec3(0.8,0.1,0.1),glm::vec3(0.1,0.1,0.1),glm::vec3(0.5),80);
     Material* mat2 = material_generator->GenMaterial(glm::vec3(0.1,0.8,0.1),glm::vec3(0.1,0.1,0.1),glm::vec3(0.5),50);
     Material* mat3 = material_generator->GenMaterial(glm::vec3(0.1,0.1,0.8),glm::vec3(0.1,0.1,0.1),glm::vec3(0.5),100);
-    Material* mat4 = material_generator->GenMaterial(glm::vec3(1,1,0.1),glm::vec3(0.1,0.1,0.1),glm::vec3(0.1),35);
+    Material* mat4 = material_generator->GenMaterial(glm::vec3(0.5,0.5,0.025),glm::vec3(0.1,0.1,0.1),glm::vec3(0.1),35);
+    Material* mat5 = material_generator->GenMaterial(glm::vec3(0.75,0.75,0.75),glm::vec3(0.75,0.75,0.75),glm::vec3(0.01),35);
     
-    scene->AddLight(new Light(glm::vec3(6,3,1),25.0f,glm::vec3(1.0f,1.0f,1.0f)));
+    scene->AddLight(new Light(glm::vec3(6,3,1),15.0f,glm::vec3(1.0f,1.0f,1.0f)));
+    scene->AddLight(new Light(glm::vec3(3,3,3),10.0f,glm::vec3(0.5f,0.7f,0.1f)));
+    scene->AddLight(new Light(glm::vec3(8,0,0),20.0f,glm::vec3(1.0f,0.7f,0.0f)));
     
     scene->AddObject(new Sphere(glm::vec3(3,0,0), 1, mat1));
     scene->AddObject(new Sphere(glm::vec3(0,3,0), 1, mat2));
     scene->AddObject(new Sphere(glm::vec3(0,0,3), 1, mat3));
     scene->AddObject(new Sphere(glm::vec3(0,0,0), 1, mat4));
     
-    scene->AddObject(new Plane(glm::vec3(-1,-1,-1), glm::vec3(1,1,1), mat4));
+    scene->AddObject(new Plane(glm::vec3(-1,-1,-1), glm::vec3(1,1,1), mat5));
     
     renderer->SetScene(scene);
     renderer->SetRenderResolution(width,height);
@@ -47,7 +50,7 @@ int main(int argc, char* args[])
     //main loop
     while (!renderthread->IsRenderingDone() && windowwrapper->IsActive())
     {
-        renderthread->Wait();
+        renderthread->WaitRefresh();
         windowwrapper->Refresh();
     }
     windowwrapper->Refresh();

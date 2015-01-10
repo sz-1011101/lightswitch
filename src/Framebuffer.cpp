@@ -14,6 +14,8 @@ Framebuffer::Framebuffer(int width, int height)
         }
     }
     
+    framebuffer_semaphore = SDL_CreateSemaphore(1);
+    
 }
 Framebuffer::~Framebuffer()
 {
@@ -26,21 +28,26 @@ Framebuffer::~Framebuffer()
 
 void Framebuffer::SetPixel(int x, int y, glm::vec3 rgb)
 {
-    
+    SDL_SemWait(framebuffer_semaphore);
     if (x>=0 && x<width && y>=0 && y<height)
     {
         pixels[x][y] = rgb;
     }
-    
+    SDL_SemPost(framebuffer_semaphore);
 }
 
 glm::vec3 Framebuffer::GetPixel(int x, int y)
 {
-    return pixels[x][y];
+    SDL_SemWait(framebuffer_semaphore);
+    glm::vec3 result = pixels[x][y];
+    SDL_SemPost(framebuffer_semaphore);
+    
+    return result;
 }
 
 void Framebuffer::Reset(glm::vec3 rgb)
 {
+    SDL_SemWait(framebuffer_semaphore);
     for (int i=0;i<width;i++)
     {
         for (int j=0;j<height;j++)
@@ -48,6 +55,7 @@ void Framebuffer::Reset(glm::vec3 rgb)
             pixels[i][j] = rgb;
         }
     }
+    SDL_SemPost(framebuffer_semaphore);
 }
 
 int Framebuffer::GetWidth()

@@ -5,22 +5,26 @@
 RenderThread::RenderThread(Renderer* renderer)
 {
     this->renderer = renderer;
-    this->semaphore_1 = SDL_CreateSemaphore(1);
-    this->semaphore_2 = SDL_CreateSemaphore(1);
+    semaphore_1 = SDL_CreateSemaphore(1);
+    semaphore_2 = SDL_CreateSemaphore(1);
     SDL_SemWait(semaphore_1); //Stop renderthread from rendering prematurly
+
+    //these are semaphores used for job retrieval sync
+    semaphore_job_avaible = SDL_CreateSemaphore(1);
+    semaphore_job_waiting = SDL_CreateSemaphore(1);
+    semaphore_job_protect = SDL_CreateSemaphore(1);
+    SDL_SemWait(semaphore_job_avaible);
     
     //job.x, job.y = -1 mean there is no job avaible currently
-    this->job.x = -1;
-    this->job.y = -1;
-    this->job.cell_width_height = -1;
+    job.x = -1;
+    job.y = -1;
+    job.cell_width_height = -1;
     
-    this->job_mutex = SDL_CreateMutex();
-    this->job_event = SDL_CreateCond();
-    this->job_waiting_for_event = SDL_CreateCond();
+    active = true;
+    jobs_assigned = false;
+    thread_amount = SDL_GetCPUCount(); //Maximum amount of threads that will be created when rendering
     
-    this->active = true;
-    this->jobs_done = false;
-    this->main_thread_id = SDL_CreateThread(RenderAll, "Main Render Thread", this);
+    main_thread_id = SDL_CreateThread(RenderAll, "Main Render Thread", this);
 }
 
 RenderThread::~RenderThread()
@@ -30,17 +34,16 @@ RenderThread::~RenderThread()
     SDL_DestroySemaphore(semaphore_1);
     SDL_DestroySemaphore(semaphore_2);
     
-    SDL_DestroyCond(job_event);
-    SDL_DestroyCond(job_waiting_for_event);
-    
-    SDL_DestroyMutex(job_mutex);
+    SDL_DestroySemaphore(semaphore_job_avaible);
+    SDL_DestroySemaphore(semaphore_job_waiting);
+    SDL_DestroySemaphore(semaphore_job_protect);
 }
 
-void RenderThread::Wait()
+void RenderThread::WaitRefresh()
 {
     SDL_SemWait(semaphore_1);
 }
-void RenderThread::Signal()
+void RenderThread::SignalRefresh()
 {
     SDL_SemPost(semaphore_1);
 }
@@ -66,22 +69,25 @@ Renderer* RenderThread::GetRenderer()
     return renderer;
 }
 
+int RenderThread::GetThreadAmount()
+{
+    return thread_amount;
+}
+
 int RenderThread::RenderAll(void* pointer_to_instance)
 {
     RenderThread* ptr = (RenderThread*) pointer_to_instance;
+    RenderWorker** workers = new RenderWorker*[ptr->GetThreadAmount()]; //pointer to array which holds the workers
+        
+    for (int i = 0; i < ptr->GetThreadAmount(); i++)
+    {
+        workers[i] = new RenderWorker(ptr);
+    }
+    printf("%i Worker threads created\n", ptr->GetThreadAmount());
+    
     RenderJob job_to_assign = {-1,-1};
     
-    int thread_amount = SDL_GetCPUCount();
-    
-    const int CELL_WIDTH_HEIGHT = 15; //How large the quad is the thread handles in a single job
-
-    SDL_Thread** worker_thread_id = new SDL_Thread*[thread_amount];
-    printf("%i Threads created\n", thread_amount);
-    
-    for (int i = 0; i < thread_amount; i++) //Create a bunch of workers
-    {
-        worker_thread_id[i] = SDL_CreateThread(RenderWorker::RenderJobs, "render worker", ptr);
-    } 
+    const int CELL_WIDTH_HEIGHT = 128; //How large the quad is the thread handles in a single job
 
     for (int y = 0; y < ptr->GetRenderer()->GetHeight(); y += CELL_WIDTH_HEIGHT)
     {
@@ -108,66 +114,61 @@ int RenderThread::RenderAll(void* pointer_to_instance)
     }
     
     puts("Assigned all Jobs");
-
-    ptr->SignalAllJobsDone(); //Waits until the last job has been taken, then sets jobs_done = true
     
-    for (int i = 0; i < thread_amount; i++) //Wait for all workers to return
+    for (int i = 0; i < ptr->GetThreadAmount(); i++) //Signal all Workers that no jobs are avaible anymore
     {
-        SDL_WaitThread(worker_thread_id[i], NULL);
+        ptr->SignalAllJobsAssigned();
     }
     
-    delete[] worker_thread_id;
+    for (int i = 0; i < ptr->GetThreadAmount(); i++)
+    { 
+        delete workers[i];
+        workers[i] = NULL;
+    }
+    
     ptr->SetRenderDone();
-    ptr->Signal();
-
+    ptr->SignalRefresh();
+    
     return 0;
+}
+
+void RenderThread::Render(RenderJob job)
+{
+    renderer->Render(job);
 }
 
 void RenderThread::SetJob(RenderJob job)
 {
-    SDL_LockMutex(job_mutex);
+    SDL_SemWait(semaphore_job_waiting);
     
-    if (this->job.x != -1 || this->job.y != -1) //Job not retrieved yet
-    {
-        SDL_CondWait(job_event, job_mutex);
-    }
+    SDL_SemWait(semaphore_job_protect);
     
     this->job = job;
-    
-    SDL_UnlockMutex(job_mutex);
-    
-    SDL_CondSignal(job_waiting_for_event);
+
+    SDL_SemPost(semaphore_job_protect);
+
+    SDL_SemPost(semaphore_job_avaible);
 }
 
-void RenderThread::SignalAllJobsDone()
+void RenderThread::SignalAllJobsAssigned()
 {
-    SDL_LockMutex(job_mutex);
+    SDL_SemWait(semaphore_job_waiting);
     
-    if (this->job.x != -1 || this->job.y != -1) //Job not retrieved yet
-    {
-        SDL_CondWait(job_event, job_mutex);
-    }
+    SDL_SemWait(semaphore_job_protect);
     
-    jobs_done = true;
+    jobs_assigned = true;
+    
+    SDL_SemPost(semaphore_job_protect);
 
-    SDL_UnlockMutex(job_mutex);
-    
-    SDL_CondSignal(job_waiting_for_event);
+    SDL_SemPost(semaphore_job_avaible);
     
 }
 
 void RenderThread::PreRetrieveJob()
 {
-    SDL_LockMutex(job_mutex);
+    SDL_SemWait(semaphore_job_avaible);
     
-    if (!jobs_done)
-    {
-        if (this->job.x == -1 && this->job.y == -1) //Job not assigned
-        {
-            SDL_CondWait(job_waiting_for_event, job_mutex);
-        }
-    }
-    
+    SDL_SemWait(semaphore_job_protect);
 }
 
 RenderJob RenderThread::RetrieveJob()
@@ -181,16 +182,14 @@ RenderJob RenderThread::RetrieveJob()
     return result_job;
 }
 
-bool RenderThread::IsAllJobsDone()
+bool RenderThread::IsAllJobsAssigned()
 {
-    return jobs_done;
+    return jobs_assigned;
 }
 
 void RenderThread::PostRetrieveJob()
 {
+    SDL_SemPost(semaphore_job_protect);
     
-    SDL_UnlockMutex(job_mutex);
-    
-    SDL_CondSignal(job_event);
-
+    SDL_SemPost(semaphore_job_waiting);
 }

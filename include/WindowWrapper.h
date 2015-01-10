@@ -1,6 +1,5 @@
 #include <SDL2/SDL.h>
 
-
 class Framebuffer;
 
 class WindowWrapper

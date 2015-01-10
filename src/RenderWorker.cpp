@@ -1,11 +1,26 @@
 #include <include/RenderWorker.h>
 #include <include/RenderThread.h>
-#include <include/Renderer.h>
 #include <stdio.h>
 
-int RenderWorker::RenderJobs(void* pointer_to_render_thread)
+RenderWorker::RenderWorker(RenderThread* render_thread)
 {
-    RenderThread* ptr = (RenderThread*) pointer_to_render_thread;
+    this->render_thread = render_thread;
+    thread_id = SDL_CreateThread(RenderWorker::RenderJobs, "render worker", this);
+}
+
+RenderWorker::~RenderWorker()
+{
+    SDL_WaitThread(thread_id, NULL);
+}
+
+RenderThread* RenderWorker::GetRenderThread()
+{
+    return render_thread;
+}
+
+int RenderWorker::RenderJobs(void* pointer_to_render_worker)
+{
+    RenderThread* ptr = ((RenderWorker*) pointer_to_render_worker)->GetRenderThread(); //pointer to Renderer instance
     RenderJob job;
 
     bool active= true;
@@ -15,7 +30,7 @@ int RenderWorker::RenderJobs(void* pointer_to_render_thread)
     {
         ptr->PreRetrieveJob();
         
-        if (ptr->IsAllJobsDone())
+        if (ptr->IsAllJobsAssigned())
         {
             active = false;
         }
@@ -28,8 +43,8 @@ int RenderWorker::RenderJobs(void* pointer_to_render_thread)
         
         if (active) //There is a valid job assigned, so do it
         {
-            ptr->GetRenderer()->Render(job); //Render the quad
-            ptr->Signal(); //Signal that a new quad is done
+            ptr->Render(job); //Render the quad
+            ptr->SignalRefresh(); //Signal that a new quad is done
         }
 
     }

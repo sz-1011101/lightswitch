@@ -89,11 +89,11 @@ glm::vec3 Phong::CalculateIntensity(Ray* ray, int recursion_depth)
             {
                 Object* reflexion_hit_object = reflexion_ray->GetIntersection().object;
                 glm::vec3 reflected_intens = reflexion_hit_object->CalculateIntensity(this, reflexion_ray);
-                complete_intensity += specular*reflected_intens; //specular reflexion
+                complete_intensity = (specular*reflected_intens) + (glm::vec3(1.0f) - specular)*complete_intensity; //specular reflexion
             }
             else if (use_sky_color)
             {
-                 complete_intensity = (complete_intensity*(glm::vec3(1.0f)-specular)+sky*specular);
+                 complete_intensity = specular*sky + (glm::vec3(1.0f) - specular)*complete_intensity;
             }
             
             delete reflexion_ray;
