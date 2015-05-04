@@ -15,13 +15,14 @@ int main(int argc, char* args[])
     const int width = 1000;
     const int height = 1000;
     
-    Camera* camera = new Camera(glm::vec3(0,1,0),glm::vec3(7,7,7),glm::vec3(0,0,0),1.0f,1.0f); 
+    Camera* camera = new Camera(glm::vec3(0,1,0),glm::vec3(25,10,25),glm::vec3(0,0,0),1.0f,1.0f); 
     Framebuffer* framebuffer = new Framebuffer(width, height);
     Renderer* renderer = Renderer::GetInstance();
     WindowWrapper* windowwrapper = new WindowWrapper(width, height, framebuffer);
     Scene* scene = new Scene();
     Phong* phong_illumination = new Phong(scene ,3 ,0.00001f, glm::vec3(0.19,0.59,0.95), true);
     MaterialGenerator* material_generator = new MaterialGenerator();
+    
     Material* mat1 = material_generator->GenMaterial(glm::vec3(0.8,0.1,0.1),glm::vec3(0.1,0.1,0.1),glm::vec3(0.5),80);
     Material* mat2 = material_generator->GenMaterial(glm::vec3(0.1,0.8,0.1),glm::vec3(0.1,0.1,0.1),glm::vec3(0.5),50);
     Material* mat3 = material_generator->GenMaterial(glm::vec3(0.1,0.1,0.8),glm::vec3(0.1,0.1,0.1),glm::vec3(0.5),100);
